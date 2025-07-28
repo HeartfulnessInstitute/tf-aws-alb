@@ -34,7 +34,7 @@ module "alb" {
   route53_zone_id         = "Z123456ABCDEFG"
 
   tags = {
-    Environment = "prod"
+    Environment = "dev"
     Terraform   = "true"
   }
 }

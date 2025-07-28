@@ -1,208 +1,109 @@
-provider "aws" {
-  region = var.aws_region
-}
-
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.0.0"
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
+      version = "~> 4.0"
+    }
+    github = {
+      source  = "integrations/github"
       version = "~> 5.0"
     }
   }
 }
 
-# ACM Certificate
-resource "aws_acm_certificate" "cert" {
-  domain_name       = var.acm_domain_name
-  validation_method = "DNS"
+# Local Variables
+locals {
+  common_tags = {
+    Environment = var.environment
+    Project     = "hfn-project"
+    alb_name    = "ALB-HFN-dev"
+    app_name    = "myapp"
+  }
+
+  idle_timeout_by_env = {
+    dev     = 60
+    staging = 90
+    prod    = 120
+  }
+
+  idle_timeout = lookup(local.idle_timeout_by_env, var.environment, 60)
+}
+
+# ACM Certificate Module
+module "acm" {
+  source            = "./modules/acm_cert"
+  acm_domain_name   = var.acm_domain_name
+  route53_zone_id   = var.route53_zone_id
   tags              = var.tags
+}
 
-  lifecycle {
-    create_before_destroy = true
+# VPC Data Source
+data "aws_vpc" "vpc" {
+  filter {
+    name   = "tag:Name"
+    values = ["care-dev"]
   }
 }
 
-# Route53 Record for Validation
-resource "aws_route53_record" "cert_validation" {
-  count   = length(aws_acm_certificate.cert.domain_validation_options)
-  zone_id = var.route53_zone_id
-
-  name    = tolist(aws_acm_certificate.cert.domain_validation_options)[count.index].resource_record_name
-  type    = tolist(aws_acm_certificate.cert.domain_validation_options)[count.index].resource_record_type
-  records = [tolist(aws_acm_certificate.cert.domain_validation_options)[count.index].resource_record_value]
-  ttl     = 300
-}
-
-
-# Certificate Validation
-resource "aws_acm_certificate_validation" "cert_validation" {
-  certificate_arn         = aws_acm_certificate.cert.arn
-  validation_record_fqdns = [for record in aws_route53_record.cert_validation : record.fqdn]
-}
-
-# Load Balancer
-resource "aws_lb" "load_balancer" {
-  name               = var.name
-  internal           = var.internal
-  load_balancer_type = "application"
-  security_groups    = var.security_groups
-  subnets            = var.subnets
-
-  enable_deletion_protection = var.enable_deletion_protection
-  idle_timeout               = var.idle_timeout
-  tags                       = var.tags
-}
-
-# Default Target Group
-resource "aws_lb_target_group" "default" {
-  name        = "${var.name}-default"
-  port        = var.default_port
-  protocol    = var.target_group_protocol
-  vpc_id      = var.vpc_id
-  target_type = var.target_type
-
-  health_check {
-    path                = "/"
-    protocol            = var.health_check_protocol
-    interval            = var.health_check_interval
-    timeout             = var.health_check_timeout
-    healthy_threshold   = var.health_check_healthy_threshold
-    unhealthy_threshold = var.health_check_unhealthy_threshold
+# EC2 Instances Data Source
+data "aws_instances" "app_instances" {
+  filter {
+    name   = "tag:Name"
+    values = ["care-server"]
   }
-
-  tags = var.tags
-}
-
-# API Target Group
-resource "aws_lb_target_group" "api_tg" {
-  name        = "${var.name}-api"
-  port        = var.api_port
-  protocol    = var.target_group_protocol
-  vpc_id      = var.vpc_id
-  target_type = var.target_type
-
-  health_check {
-    path                = "/health"
-    protocol            = var.health_check_protocol
-    interval            = var.health_check_interval
-    timeout             = var.health_check_timeout
-    healthy_threshold   = var.health_check_healthy_threshold
-    unhealthy_threshold = var.health_check_unhealthy_threshold
-  }
-
-  tags = var.tags
-}
-
-# APP Target Group
-resource "aws_lb_target_group" "app_tg" {
-  name        = "${var.name}-app"
-  port        = var.app_port
-  protocol    = var.target_group_protocol
-  vpc_id      = var.vpc_id
-  target_type = var.target_type
-
-  health_check {
-    path                = "/health"
-    protocol            = var.health_check_protocol
-    interval            = var.health_check_interval
-    timeout             = var.health_check_timeout
-    healthy_threshold   = var.health_check_healthy_threshold
-    unhealthy_threshold = var.health_check_unhealthy_threshold
-  }
-
-  tags = var.tags
-}
-
-# target group attachment to ec2
-resource "aws_lb_target_group_attachment" "api_attachment" {
-  count            = length(var.api_instance_ids)
-  target_group_arn = aws_lb_target_group.api_tg.arn
-  target_id        = var.api_instance_ids[count.index]
-  port             = var.api_port
-}
-
-resource "aws_lb_target_group_attachment" "app_attachment" {
-  count            = length(var.app_instance_ids)
-  target_group_arn = aws_lb_target_group.app_tg.arn
-  target_id        = var.app_instance_ids[count.index]
-  port             = var.app_port
-}
-
-# HTTPS Listener
-resource "aws_lb_listener" "https_listener" {
-  load_balancer_arn = aws_lb.load_balancer.arn
-  port              = 443
-  protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-2016-08"
-  certificate_arn   = aws_acm_certificate.cert.arn
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.default.arn
-  }
-
-  depends_on = [aws_acm_certificate_validation.cert_validation]
-}
-
-# HTTP Listener: redirect to HTTPS
-resource "aws_lb_listener" "http_redirect" {
-  load_balancer_arn = aws_lb.load_balancer.arn
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    type = "redirect"
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
+  filter {
+    name   = "instance-state-name"
+    values = ["running"]
   }
 }
 
-# Listener Rule: /api/* + Host = api.example.com
-resource "aws_lb_listener_rule" "api_rule" {
-  listener_arn = aws_lb_listener.https_listener.arn
-  priority     = 10
+# Get Existing ALB by Name
+data "aws_lb" "existing_alb" {
+  name = local.common_tags.alb_name
+}
 
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.api_tg.arn
-  }
-
-  condition {
-    host_header {
-      values = ["api.${var.domain_name}"]
-    }
-  }
-
-  condition {
-    path_pattern {
-      values = ["/v1/*"]
-    }
+# Target Group Module
+module "target_group" {
+  source              = "./modules/target_group"
+  app_name            = "dev-care"
+  port                = 80
+  protocol            = "HTTP"
+  vpc_id              = data.aws_vpc.vpc.id
+  health_check_path   = "/"
+  instance_ids        = data.aws_instances.app_instances.ids
+  target_group_arn  = module.target_group.target_group_arn
+  tags                = {
+    Environment = "dev"
+    Project     = "dev-care"
   }
 }
 
-# Listener Rule: /app/* + Host = app.example.com
-resource "aws_lb_listener_rule" "app_rule" {
-  listener_arn = aws_lb_listener.https_listener.arn
-  priority     = 20
 
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.app_tg.arn
-  }
+# Listener Module
+module "listener" {
+  source = "./modules/listener"
 
-  condition {
-    host_header {
-      values = ["app.${var.domain_name}"]
-    }
-  }
-
-  condition {
-    path_pattern {
-      values = ["/*"]
-    }
-  }
+  target_group_arn  = module.target_group.target_group_arn
+  listener_arn      = data.aws_lb_listener.https_listener.arn
+  priority          = 100
+  host              = "dev.example.com"
+  path_pattern      = "/app/*"
+  vpc_id            = module.networking.vpc_id
+  app_name          = "my-app"  
+  instance_ids      = ["i-00af2e73a2a19774e"]  
+  health_check_path = "/health"
+  tags              = local.common_tags
+  port              = [80, 443, 22] 
 }
+
+# Networking Module
+module "networking" {
+  source = "./modules/networking"
+
+  vpc_id = data.aws_vpc.vpc.id
+  availability_zone = var.availability_zones[count.index]
+}
+
+
