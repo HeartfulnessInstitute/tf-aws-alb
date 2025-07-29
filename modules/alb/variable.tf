@@ -13,10 +13,6 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "subnet_ids" {
-  description = "List of subnet IDs for the ALB"
-  type        = list(string)
-}
 variable "internal" {
   description = "Whether the ALB is internal"
   type        = bool
@@ -93,43 +89,6 @@ variable "health_check_unhealthy_threshold" {
 variable "acm_domain_name" {
   description = "The domain name to use for ACM certificate"
   type        = string
-}
-
-
-
-variable "domain_name" {
-  description = "Base domain name for listener host-header conditions"
-  type        = string
-}
-
-variable "default_port" {
-  description = "Port for the default target group"
-  type        = number
-  default     = 80
-}
-
-variable "api_port" {
-  description = "Port for the API target group"
-  type        = number
-  default     = 8080
-}
-
-variable "app_port" {
-  description = "Port for the APP target group"
-  type        = number
-  default     = 3000
-}
-
-variable "api_instance_ids" {
-  description = "List of EC2 instance IDs for the API target group"
-  type        = list(string)
-  default     = []
-}
-
-variable "app_instance_ids" {
-  description = "List of EC2 instance IDs for the APP target group"
-  type        = list(string)
-  default     = []
 }
 
 variable "route53_zone_id" {

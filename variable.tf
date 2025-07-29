@@ -5,34 +5,22 @@ variable "aws_region" {
 }
 
 variable "availability_zones" {
-  description = "List of availability zones to be used"
+  description = "List of Availability Zones to use"
   type        = list(string)
+  default     = ["ap-south-1a", "ap-south-1b", "ap-south-1c"]
 }
-
-variable "load_balancer_name" {
-  description = "Name of the ALB"
-  type        = string
-  }
-
 
 variable "vpc_id" {
   description = "ID of the VPC"
   type        = string
+  default = "vpc-01a64c15484c80c1d"
 }
 
-
-variable "subnet_ids" {
-  description = "List of subnet IDs for the ALB"
-  type        = list(string)
-}
-
-variable "tags" {
-  type = map(string)
-}
 
 variable "route53_zone_id" {
   description = "Route 53 hosted zone ID for DNS validation"
   type        = string
+  default = "Z00231483BIHK" 
 }
 
 variable "acm_domain_name" {
@@ -46,12 +34,19 @@ variable "environment" {
 }
 
 variable "port" {
-  type = number
+  type = list(number)
 }
+
 
 variable "app_name" {
   type = string
+  default = "myapp"
 }
 
+variable "tags" {
+  description = "Common tags to apply to resources"
+  type        = map(string)
+  default     = {}
+}
 
 
