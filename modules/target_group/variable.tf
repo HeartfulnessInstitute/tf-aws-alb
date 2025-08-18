@@ -21,16 +21,16 @@ variable "environment" {
   type        = string
 }
 
-# variable "certificate_arn" {
-#   description = "ARN of existing ACM certificate"
-#   type        = string
-#   default = "arn:aws:acm:ap-south-1:502390415551:certificate/f0025adc-7674-4656-93a9-1e111127c9ce"
-# }
+variable "acm_certificate_arn" {
+  description = "ACM Certificate ARN for HTTPS"
+  type        = string
+  default = "arn:aws:acm:ap-south-1:502390415551:certificate/f0025adc-7674-4656-93a9-1e111127c9ce"
+}
 
 variable "instance_ids" {
-  type = list(string)
+  type = string
   description = "List of EC2 instance IDs to register to target group"
-  default     = []
+  default = ["i-00af2e73a2a19774e"]
 }
 
 
@@ -45,6 +45,12 @@ variable "priority" {
   description = "Priority for listener rule"
   default     = 100
 }
+
+variable "security_group_id" {
+  description = "Security group ID to attach to the ALB"
+  type        = string
+}
+
 
 variable "health_check_path" {
   type        = string
@@ -64,7 +70,7 @@ variable "tags" {
 variable "app_name" {
   type        = string
   description = "Name of the application"
-  default     = "care-app"
+  default     = "stagecare"
 }
 
 variable "vpc_id" {
