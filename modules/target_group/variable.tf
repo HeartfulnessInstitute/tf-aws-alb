@@ -28,11 +28,9 @@ variable "acm_certificate_arn" {
 }
 
 variable "instance_ids" {
-  type = string
-  description = "List of EC2 instance IDs to register to target group"
-  default = ["i-00af2e73a2a19774e"]
+  type    = string
+  default = "i-00af2e73a2a19774e"
 }
-
 
 variable "protocol" {
   type        = string
