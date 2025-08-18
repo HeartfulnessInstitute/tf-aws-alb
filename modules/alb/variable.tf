@@ -52,10 +52,6 @@ variable "target_type" {
   default     = "instance"
 }
 
-variable "vpc_id" {
-  type = string
-}
-
 variable "health_check_path" {
   type    = string
   default = "/"
