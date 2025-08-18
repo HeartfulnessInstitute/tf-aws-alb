@@ -6,7 +6,7 @@ environment                = "dev"
 enable_deletion_protection = true
 app_name = "myapp"
 port = [80, 443]
-
+load_balancer_name = "HFN-ALB"
 
 # Target Group Settings
 target_group_protocol        = "HTTP"
