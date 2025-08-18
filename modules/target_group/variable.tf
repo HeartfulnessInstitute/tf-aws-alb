@@ -69,3 +69,8 @@ variable "vpc_id" {
   type        = string
   description = "VPC ID for the target group"
 }
+
+variable "alb_arn" {
+  type = string
+  description = "ARN of the Application Load Balancer"
+}
