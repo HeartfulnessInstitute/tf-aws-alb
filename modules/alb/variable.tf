@@ -13,6 +13,12 @@ variable "vpc_id" {
   type        = string
 }
 
+variable "subnet_ids" {
+  description = "List of subnet IDs for ALB"
+  type        = list(string)
+  default = [ "subnet-047e43e5dbb5d785f" , "subnet-07fe52885b94b8ec5"]
+}
+
 variable "internal" {
   description = "Whether the ALB is internal"
   type        = bool
@@ -93,3 +99,8 @@ variable "route53_zone_id" {
 }
 
 
+variable "acm_certificate_arn" {
+  description = "ACM Certificate ARN for HTTPS"
+  type        = string
+  default = "arn:aws:acm:ap-south-1:502390415551:certificate/f0025adc-7674-4656-93a9-1e111127c9ce"
+}
