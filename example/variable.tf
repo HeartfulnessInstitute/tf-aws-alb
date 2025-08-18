@@ -20,7 +20,7 @@ variable "vpc_id" {
 variable "route53_zone_id" {
   description = "Route 53 hosted zone ID for DNS validation"
   type        = string
-  default = "Z00231483BIHK" 
+  default = "Z00231483BIHK1KWQM9HR" 
 }
 
 variable "acm_domain_name" {
