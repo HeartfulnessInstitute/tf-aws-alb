@@ -13,7 +13,7 @@ terraform {
 }
 
 # Load Balancer
-resource "aws_lb" "load_balancer" {
+resource "aws_lb" "alb" {
   name               = var.load_balancer_name
   internal           = var.internal
   load_balancer_type = "application"
