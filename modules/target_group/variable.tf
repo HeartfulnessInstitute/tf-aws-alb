@@ -44,12 +44,6 @@ variable "priority" {
   default     = 100
 }
 
-variable "security_group_id" {
-  description = "Security group ID to attach to the ALB"
-  type        = string
-}
-
-
 variable "health_check_path" {
   type        = string
   description = "Health check path for the target group"
