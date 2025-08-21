@@ -4,7 +4,7 @@ security_groups            = ["sg-067f0a23c7bd10cef"]
 project_name               = "hfn-project"
 environment                = "dev"
 enable_deletion_protection = true
-app_name = "myapp"
+app_name = "stagecare"
 port = [80, 443]
 load_balancer_name = "HFN-ALB"
 
@@ -14,7 +14,7 @@ target_type                  = "instance"
 target_group_port            = 80
 
 # Health Checks
-health_check_path            = "/health"
+health_check_path            = "/status"
 health_check_protocol        = "HTTP"
 health_check_interval        = 30
 health_check_timeout         = 5
