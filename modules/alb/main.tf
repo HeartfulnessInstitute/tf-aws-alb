@@ -35,12 +35,12 @@ resource "aws_lb_target_group" "hfn_sm_pvt" {
   target_type = "instance"
 
   health_check {
-    path                = "/admin"
+    path                = "/healthy.html"
     interval            = 30
     timeout             = 5
     healthy_threshold   = 2
     unhealthy_threshold = 2
-    matcher             = "200-399"
+    matcher             = "200,404"
   }
 }
 

@@ -1,5 +1,5 @@
 data "aws_acm_certificate" "cert" {
-  domain   = "dev.heartfulness.org"  
+  domain   = "care.dev.heartfulness.org"  
   statuses = ["ISSUED"]
   most_recent = true
 }
@@ -9,7 +9,7 @@ output "acm_certificate_arn" {
 }
 
 data "aws_route53_zone" "selected" {
-  name         = "dev.heartfulness.org"  
+  name         = "care.dev.heartfulness.org"  
   private_zone = false                     
 }
 
