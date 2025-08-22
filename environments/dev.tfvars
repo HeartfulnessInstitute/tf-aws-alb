@@ -14,7 +14,7 @@ target_type                  = "instance"
 target_group_port            = 80
 
 # Health Checks
-health_check_path            = "/status"
+health_check_path            = "/healthy.html"
 health_check_protocol        = "HTTP"
 health_check_interval        = 30
 health_check_timeout         = 5
@@ -24,6 +24,7 @@ health_check_unhealthy_threshold = 2
 # Listener settings
 listener_port                = 80
 listener_protocol            = "HTTP"
+
 
 
 
