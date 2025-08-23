@@ -96,7 +96,7 @@ resource "aws_lb_listener_rule" "https_rule1" {
 
   condition {
     host_header {
-      values = ["dev.heartfulness.org"]
+      values = ["care.dev.heartfulness.org"]
     }
   }
 }
