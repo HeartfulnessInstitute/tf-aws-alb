@@ -102,5 +102,5 @@ variable "route53_zone_id" {
 variable "acm_certificate_arn" {
   description = "ACM Certificate ARN for HTTPS"
   type        = string
-  default = "arn:aws:acm:ap-south-1:502390415551:certificate/f0025adc-7674-4656-93a9-1e111127c9ce"
+  default = "arn:aws:acm:ap-south-1:502390415551:certificate/25cbd6d6-652f-4823-b3db-4d16925d22de"
 }
