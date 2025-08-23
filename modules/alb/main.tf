@@ -79,7 +79,7 @@ resource "aws_lb_listener" "https" {
 }
 
 
-/*resource "aws_lb_listener_rule" "https_rule1" {
+resource "aws_lb_listener_rule" "https_rule1" {
   listener_arn = aws_lb_listener.https.arn
   priority     = 1
 
@@ -99,7 +99,7 @@ resource "aws_lb_listener" "https" {
       values = ["dev.heartfulness.org"]
     }
   }
-}*/
+}
 
 resource "aws_lb_target_group_attachment" "care_server_attachment" {
   target_group_arn = aws_lb_target_group.hfn_sm_pvt.arn
