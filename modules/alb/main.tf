@@ -107,8 +107,14 @@ resource "aws_lb_target_group_attachment" "care_server_attachment" {
   port             = 80
 }
 
+
+# Default provider (your application account)
+provider "aws" {
+  region = "ap-south-1" # same region as your ALB
+}
+
 resource "aws_route53_record" "care_dev" {
-  zone_id = var.route53_zone_id  
+  zone_id = "ZP97RAFLXTNZK" # your hosted zone ID
   name    = "care.dev.heartfulness.org"
   type    = "A"
 
