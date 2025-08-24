@@ -104,3 +104,4 @@ variable "acm_certificate_arn" {
   type        = string
   default = "arn:aws:acm:ap-south-1:502390415551:certificate/f0025adc-7674-4656-93a9-1e111127c9ce"
 }
+
