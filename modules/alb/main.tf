@@ -107,7 +107,7 @@ resource "aws_lb_target_group_attachment" "care_server_attachment" {
   port             = 80
 }
 
-resource "aws_route53_record" "care_dev" {
+/*resource "aws_route53_record" "care_dev" {
   zone_id = "ZP97RAFLXTNZK" 
   name    = "care.dev.heartfulness.org"
   type    = "A"
@@ -117,4 +117,4 @@ resource "aws_route53_record" "care_dev" {
     zone_id                = aws_lb.alb_hfn_dev.zone_id
     evaluate_target_health = true
   }
-}
+}*/
