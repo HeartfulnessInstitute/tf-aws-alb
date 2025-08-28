@@ -16,7 +16,7 @@ variable "vpc_id" {
 variable "subnet_ids" {
   description = "List of subnet IDs for ALB"
   type        = list(string)
-  default = [ "subnet-047e43e5dbb5d785f" , "subnet-07fe52885b94b8ec5"]
+  default = [ "subnet-03e66b22cb9070a5c", "subnet-0f977956cc0ea131b"]
 }
 
 variable "internal" {

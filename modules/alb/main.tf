@@ -103,7 +103,7 @@ resource "aws_lb_listener_rule" "https_rule1" {
 
 resource "aws_lb_target_group_attachment" "care_server_attachment" {
   target_group_arn = aws_lb_target_group.hfn_sm_pvt.arn
-  target_id        = "i-00af2e73a2a19774e"
+  target_id        = "i-0f3c047cd624d4585"
   port             = 80
 }
 

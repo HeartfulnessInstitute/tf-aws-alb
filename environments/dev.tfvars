@@ -1,6 +1,6 @@
 aws_region                 = "ap-south-1"
 internal                   = false
-security_groups            = ["sg-067f0a23c7bd10cef"]
+security_groups            = ["sg-0194a717e5865db00"]
 project_name               = "hfn-project"
 environment                = "dev"
 enable_deletion_protection = true
