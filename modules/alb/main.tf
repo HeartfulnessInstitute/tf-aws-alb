@@ -103,16 +103,5 @@ resource "aws_lb_target_group_attachment" "this" {
   port             = 80
 }
 
-# Route53 record
-/*resource "aws_route53_record" "alb_record" {
-  zone_id = var.route53_zone_id
-  name    = var.acm_domain_name
-  type    = "A"
 
-  alias {
-    name                   = aws_lb.this.dns_name
-    zone_id                = aws_lb.this.zone_id
-    evaluate_target_health = true
-  }
-}*/
 
