@@ -1,52 +1,21 @@
-provider "aws" {
-  region = var.aws_region
+resource "aws_lb" "this" {
+  name                       = var.load_balancer_name
+  internal                   = var.internal
+  load_balancer_type         = "application"
+  subnets                    = var.subnets
+  security_groups            = var.security_groups
+  enable_deletion_protection = var.enable_deletion_protection
+  ip_address_type            = "ipv4"
+
+  tags = merge(
+    var.tags,
+    { Name = var.load_balancer_name }
+  )
 }
 
-terraform {
-  required_version = ">= 1.0"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
-resource "aws_lb" "alb_hfn_dev" {
-  name               = "hfn-care-dev-alb"
-  internal           = false
-  load_balancer_type = "application"
-  subnets            = var.subnet_ids
-  ip_address_type    = "ipv4"
-
-  enable_deletion_protection = false
-
-  tags = {
-    Name        = "ALB-HFN-dev"
-    Environment = "dev"
-  }
-}
-
-resource "aws_lb_target_group" "hfn_sm_pvt" {
-  name        = "HFN-SM-PVT-TG"
-  port        = 80
-  protocol    = "HTTP"
-  vpc_id      = var.vpc_id
-  target_type = "instance"
-
-  health_check {
-    path                = "/healthy.html"
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    matcher             = "200,404"
-  }
-}
-
-# HTTP -> HTTPS redirect
+# HTTP -> HTTPS
 resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.alb_hfn_dev.arn
+  load_balancer_arn = aws_lb.this.arn
   port              = 80
   protocol          = "HTTP"
 
@@ -60,12 +29,12 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# HTTPS listener
+# HTTPS
 resource "aws_lb_listener" "https" {
-  load_balancer_arn = aws_lb.alb_hfn_dev.arn
+  load_balancer_arn = aws_lb.this.arn
   port              = 443
   protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  ssl_policy        = var.ssl_policy
   certificate_arn   = var.acm_certificate_arn
 
   default_action {
@@ -78,43 +47,72 @@ resource "aws_lb_listener" "https" {
   }
 }
 
+# Target Groups
+resource "aws_lb_target_group" "this" {
+  for_each = var.applications
 
-resource "aws_lb_listener_rule" "https_rule1" {
+  name        = each.value.target_group_name
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+  target_type = "instance"
+
+  health_check {
+    path                = lookup(each.value, "health_check_path", "/healthy.html")
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    matcher             = "200,404"
+  }
+}
+
+# Listener Rules
+resource "aws_lb_listener_rule" "this" {
+  for_each     = var.applications
   listener_arn = aws_lb_listener.https.arn
-  priority     = 1
+  priority     = each.value.priority
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.hfn_sm_pvt.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["/*"]
-    }
+    target_group_arn = aws_lb_target_group.this[each.key].arn
   }
 
   condition {
     host_header {
-      values = ["care.dev.heartfulness.org"]
+      values = [each.value.domain]
+    }
+  }
+
+  condition {
+    path_pattern {
+      values = lookup(each.value, "path_patterns", ["/*"])
     }
   }
 }
 
-resource "aws_lb_target_group_attachment" "care_server_attachment" {
-  target_group_arn = aws_lb_target_group.hfn_sm_pvt.arn
-  target_id        = "i-0f3c047cd624d4585"
+# Attach EC2 Instances
+resource "aws_lb_target_group_attachment" "this" {
+  for_each = {
+    for app, cfg in var.applications :
+    app => cfg if contains(keys(cfg), "target_ids")
+  }
+
+  target_group_arn = aws_lb_target_group.this[each.key].arn
+  target_id        = element(each.value.target_ids, 0)
   port             = 80
 }
 
-/*resource "aws_route53_record" "care_dev" {
-  zone_id = "ZP97RAFLXTNZK" 
-  name    = "care.dev.heartfulness.org"
+# Route53 record
+/*resource "aws_route53_record" "alb_record" {
+  zone_id = var.route53_zone_id
+  name    = var.acm_domain_name
   type    = "A"
 
   alias {
-    name                   = aws_lb.alb_hfn_dev.dns_name
-    zone_id                = aws_lb.alb_hfn_dev.zone_id
+    name                   = aws_lb.this.dns_name
+    zone_id                = aws_lb.this.zone_id
     evaluate_target_health = true
   }
 }*/
+

@@ -1,107 +1,64 @@
-variable "aws_region" {
-  description = "AWS region to deploy resources"
-  type        = string
-  default     = "ap-south-1"
-}
+variable "aws_region" {}
 
-variable "load_balancer_name" {
-  type = string
-}
+variable "vpc_id" {}
 
-variable "vpc_id" {
-  description = "ID of the VPC where resources will be created"
-  type        = string
-}
-
-variable "subnet_ids" {
-  description = "List of subnet IDs for ALB"
+variable "subnets" {
+  description = "Subnets for ALB"
   type        = list(string)
-  default = [ "subnet-03e66b22cb9070a5c", "subnet-0f977956cc0ea131b"]
-}
-
-variable "internal" {
-  description = "Whether the ALB is internal"
-  type        = bool
 }
 
 variable "security_groups" {
-  description = "List of security group IDs for the ALB"
+  description = "Security groups for ALB"
   type        = list(string)
 }
 
-variable "subnets" {
-  description = "List of subnet IDs"
-  type        = list(string)
-}
-
-variable "enable_deletion_protection" {
-  type        = bool
-}
-
-variable "idle_timeout" {
-  type        = number
-  default     = 60
-}
-
-variable "tags" {
-  type        = map(string)
-  default     = {}
-}
-
-variable "target_group_protocol" {
-  type        = string
-  default     = "HTTP"
-}
-
-variable "target_type" {
-  type        = string
-  default     = "instance"
-}
-
-variable "health_check_path" {
-  type    = string
-  default = "/"
-}
-
-variable "health_check_protocol" {
-  type    = string
-  default = "HTTP"
-}
-
-variable "health_check_interval" {
-  type    = number
-  default = 30
-}
-
-variable "health_check_timeout" {
-  type    = number
-  default = 5
-}
-
-variable "health_check_healthy_threshold" {
-  type    = number
-  default = 3
-}
-
-variable "health_check_unhealthy_threshold" {
-  type    = number
-  default = 3
-}
+variable "acm_certificate_arn" {}
 
 variable "acm_domain_name" {
-  description = "The domain name to use for ACM certificate"
+  description = "Primary domain name for ACM validation"
   type        = string
 }
 
 variable "route53_zone_id" {
-  description = "Route 53 hosted zone ID for DNS validation"
+  description = "Route53 Hosted Zone ID"
   type        = string
 }
 
-
-variable "acm_certificate_arn" {
-  description = "ACM Certificate ARN for HTTPS"
+variable "load_balancer_name" {
+  description = "Name of the ALB"
   type        = string
-  default = "arn:aws:acm:ap-south-1:502390415551:certificate/25cbd6d6-652f-4823-b3db-4d16925d22de"
+}
+
+variable "internal" {
+  description = "Whether ALB is internal"
+  type        = bool
+  default     = false
+}
+
+variable "enable_deletion_protection" {
+  description = "Whether to enable deletion protection"
+  type        = bool
+  default     = false
+}
+
+variable "ssl_policy" {
+  default = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+}
+
+variable "tags" {
+  type    = map(string)
+  default = {}
+}
+
+variable "applications" {
+  description = "Map of applications with domain, TG, and rules"
+  type = map(object({
+    domain             = string
+    target_group_name  = string
+    priority           = number
+    path_patterns      = optional(list(string))
+    health_check_path  = optional(string)
+    target_ids         = optional(list(string))
+  }))
 }
 
