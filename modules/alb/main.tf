@@ -1,21 +1,70 @@
-resource "aws_lb" "this" {
-  name                       = var.load_balancer_name
-  internal                   = var.internal
-  load_balancer_type         = "application"
-  subnets                    = var.subnets
-  security_groups            = var.security_groups
-  enable_deletion_protection = var.enable_deletion_protection
-  ip_address_type            = "ipv4"
-
-  tags = merge(
-    var.tags,
-    { Name = var.load_balancer_name }
-  )
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+    }
+  }
 }
 
-# HTTP -> HTTPS
+resource "aws_security_group" "alb" {
+  name        = "${var.name_prefix}-alb-sg"
+  description = "Allow HTTP/HTTPS to ALB"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(var.tags, { Name = "${var.name_prefix}-alb-sg" })
+}
+
+resource "aws_lb" "lb" {
+  name               = "${var.name_prefix}-alb"
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb.id]
+  subnets            = var.public_subnet_ids
+  tags               = merge(var.tags, { Name = "${var.name_prefix}-alb" })
+}
+
+resource "aws_lb_target_group" "this" {
+  count = var.create_target_group ? 1 : 0
+
+  name     = "${var.name_prefix}-tg"
+  port     = var.target_port
+  protocol = "HTTP"
+  vpc_id   = var.vpc_id
+
+  health_check {
+    path                = "/"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    matcher             = "200-399"
+  }
+
+  tags = var.tags
+}
+
 resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.this.arn
+  load_balancer_arn = aws_lb.lb.arn
   port              = 80
   protocol          = "HTTP"
 
@@ -29,12 +78,11 @@ resource "aws_lb_listener" "http" {
   }
 }
 
-# HTTPS
 resource "aws_lb_listener" "https" {
-  load_balancer_arn = aws_lb.this.arn
+  load_balancer_arn = aws_lb.lb.arn
   port              = 443
   protocol          = "HTTPS"
-  ssl_policy        = var.ssl_policy
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
   certificate_arn   = var.acm_certificate_arn
 
   default_action {
@@ -47,61 +95,59 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-# Target Groups
-resource "aws_lb_target_group" "this" {
-  for_each = var.applications
+resource "aws_lb_listener_rule" "https_rule" {
+  for_each = var.target_group_arns
 
-  name        = each.value.target_group_name
-  port        = 80
-  protocol    = "HTTP"
-  vpc_id      = var.vpc_id
-  target_type = "instance"
-
-  health_check {
-    path                = lookup(each.value, "health_check_path", "/healthy.html")
-    interval            = 30
-    timeout             = 5
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    matcher             = "200,404"
-  }
-}
-
-# Listener Rules
-resource "aws_lb_listener_rule" "this" {
-  for_each     = var.applications
   listener_arn = aws_lb_listener.https.arn
-  priority     = each.value.priority
+  priority     = 10 + index(sort(keys(var.target_group_arns)), each.key)
 
   action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.this[each.key].arn
+    target_group_arn = each.value
   }
 
   condition {
     host_header {
-      values = [each.value.domain]
+      values = [lookup(var.host_headers, each.key)]
     }
   }
 
   condition {
     path_pattern {
-      values = lookup(each.value, "path_patterns", ["/*"])
+      values = ["/${each.key}/*"]  
     }
   }
 }
 
-# Attach EC2 Instances
-resource "aws_lb_target_group_attachment" "this" {
-  for_each = {
-    for app, cfg in var.applications :
-    app => cfg if contains(keys(cfg), "target_ids")
-  }
+resource "aws_acm_certificate" "cert" {
+  provider          = aws.main
+  domain_name       = var.acm_domain_name
+  validation_method = "DNS"
 
-  target_group_arn = aws_lb_target_group.this[each.key].arn
-  target_id        = element(each.value.target_ids, 0)
-  port             = 80
+  tags = var.tags
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
+resource "aws_route53_record" "cert_validation" {
+  provider = aws.main  
+  for_each = {
+    for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => dvo
+  }
+
+  zone_id = var.route53_zone_id
+  name    = each.value.resource_record_name
+  type    = each.value.resource_record_type
+  records = [each.value.resource_record_value]
+  ttl     = 300
+}
+
+resource "aws_acm_certificate_validation" "cert_validation" {
+  provider                = aws.main
+  certificate_arn         = aws_acm_certificate.cert.arn
+  validation_record_fqdns = [for r in aws_route53_record.cert_validation : r.fqdn]
+}
 
 

@@ -1,64 +1,67 @@
-variable "aws_region" {}
+variable "name_prefix"       { 
+    type = string
+ }
 
-variable "vpc_id" {}
-
-variable "subnets" {
-  description = "Subnets for ALB"
-  type        = list(string)
+variable "vpc_id"            { 
+    type = string 
 }
 
-variable "security_groups" {
-  description = "Security groups for ALB"
-  type        = list(string)
+variable "public_subnet_ids" { 
+    type = list(string) 
 }
 
-variable "acm_certificate_arn" {}
+variable "target_port"       {
+     type = number
+     default = 80 
+}
+
+variable "tags"              {
+    description = "tags"
+     type = map(string)
+     default = {}
+}
+
+variable "acm_certificate_arn" {
+    type = string
+}
+
+variable "listener_rules" {
+  type = map(string)
+  default = {}
+}
+
+variable "target_groups" {
+  type = map(object({
+    port        = number
+    health_path = string
+  }))
+  default = {}
+}
+
+variable "target_group_arns" {
+  description = "Map of ECS service name to target group ARN"
+  type        = map(string)
+}
+
+variable "host_headers" {
+  description = "Map of ECS service name to host header"
+  type        = map(string)
+}
 
 variable "acm_domain_name" {
-  description = "Primary domain name for ACM validation"
+  description = "Domain name for ACM certificate"
   type        = string
 }
 
 variable "route53_zone_id" {
-  description = "Route53 Hosted Zone ID"
+  description = "Hosted zone ID in Account B"
   type        = string
 }
 
-variable "load_balancer_name" {
-  description = "Name of the ALB"
-  type        = string
-}
-
-variable "internal" {
-  description = "Whether ALB is internal"
+variable "create_target_group" {
+  description = "Whether to create a Target Group inside the module"
   type        = bool
-  default     = false
+  default     = true
 }
 
-variable "enable_deletion_protection" {
-  description = "Whether to enable deletion protection"
-  type        = bool
-  default     = false
-}
-
-variable "ssl_policy" {
-  default = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-}
-
-variable "tags" {
-  type    = map(string)
-  default = {}
-}
-
-variable "applications" {
-  description = "Map of applications with domain, TG, and rules"
-  type = map(object({
-    domain             = string
-    target_group_name  = string
-    priority           = number
-    path_patterns      = optional(list(string))
-    health_check_path  = optional(string)
-    target_ids         = optional(list(string))
-  }))
-}
 
