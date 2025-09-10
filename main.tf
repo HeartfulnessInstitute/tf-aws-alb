@@ -96,7 +96,7 @@ resource "aws_lb_listener" "https" {
 }
 
 resource "aws_lb_listener_rule" "https_rule" {
-  for_each = var.target_group_arns
+  for_each = var.create_listener_rules ? var.target_group_arns : {}
 
   listener_arn = aws_lb_listener.https.arn
   priority     = 10 + index(sort(keys(var.target_group_arns)), each.key)
@@ -106,18 +106,22 @@ resource "aws_lb_listener_rule" "https_rule" {
     target_group_arn = each.value
   }
 
-  condition {
-    host_header {
-      values = [lookup(var.host_headers, each.key)]
+  dynamic "condition" {
+    for_each = lookup(var.host_headers, each.key, null) != null ? [1] : []
+    content {
+      host_header {
+        values = [lookup(var.host_headers, each.key)]
+      }
     }
   }
 
   condition {
     path_pattern {
-      values = ["/*"]  
+      values = ["/*"]
     }
   }
 }
+
 
 resource "aws_acm_certificate" "cert" {
   provider          = aws.main
