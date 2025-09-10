@@ -6,6 +6,10 @@ terraform {
   }
 }
 
+provider "aws" {
+  alias = "main"
+}
+
 resource "aws_security_group" "alb" {
   name        = "${var.name_prefix}-alb-sg"
   description = "Allow HTTP/HTTPS to ALB"
