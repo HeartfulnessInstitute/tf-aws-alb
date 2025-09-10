@@ -21,10 +21,6 @@ variable "tags"              {
      default = {}
 }
 
-variable "acm_certificate_arn" {
-    type = string
-}
-
 variable "listener_rules" {
   type = map(string)
   default = {}
