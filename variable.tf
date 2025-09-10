@@ -64,4 +64,8 @@ variable "create_target_group" {
   default     = true
 }
 
-
+variable "create_listener_rules" {
+  type        = bool
+  default     = false
+  description = "Whether to create HTTPS listener rules inside the module"
+}
