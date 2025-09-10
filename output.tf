@@ -24,10 +24,10 @@ output "alb_sg_id"        {
     value = aws_security_group.alb.id 
 }
 
-output "acm_arn" {
-  description = "ARN of the validated ACM certificate"
-  value       = aws_acm_certificate.cert.arn
+output "certificate_arn" {
+  value = aws_acm_certificate.cert.arn
 }
+
 
 output "validation_records" {
   value = [

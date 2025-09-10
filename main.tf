@@ -84,7 +84,10 @@ resource "aws_lb_listener" "https" {
   port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn   = var.acm_certificate_arn
+  certificate_arn = aws_acm_certificate.cert.arn
+  
+
+  depends_on = [aws_acm_certificate_validation.cert_validation]
 
   default_action {
     type = "fixed-response"
@@ -96,32 +99,32 @@ resource "aws_lb_listener" "https" {
   }
 }
 
-# resource "aws_lb_listener_rule" "https_rule" {
-#   for_each = var.create_listener_rules ? var.target_group_arns : {}
+resource "aws_lb_listener_rule" "https_rule" {
+  for_each = var.create_listener_rules ? var.target_group_arns : {}
 
-#   listener_arn = aws_lb_listener.https.arn
-#   priority     = 10 + index(sort(keys(var.target_group_arns)), each.key)
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 10 + index(sort(keys(var.target_group_arns)), each.key)
 
-#   action {
-#     type             = "forward"
-#     target_group_arn = each.value
-#   }
+  action {
+    type             = "forward"
+    target_group_arn = each.value
+  }
 
-#   dynamic "condition" {
-#     for_each = lookup(var.host_headers, each.key, null) != null ? [1] : []
-#     content {
-#       host_header {
-#         values = [lookup(var.host_headers, each.key)]
-#       }
-#     }
-#   }
+  dynamic "condition" {
+    for_each = lookup(var.host_headers, each.key, null) != null ? [1] : []
+    content {
+      host_header {
+        values = [lookup(var.host_headers, each.key)]
+      }
+    }
+  }
 
-#   condition {
-#     path_pattern {
-#       values = ["/*"]
-#     }
-#   }
-# }
+  condition {
+    path_pattern {
+      values = ["/*"]
+    }
+  }
+}
 
 
 resource "aws_acm_certificate" "cert" {
