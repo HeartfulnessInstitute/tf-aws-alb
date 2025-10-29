@@ -60,7 +60,7 @@ resource "aws_lb_listener" "https" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = var.ssl_policy
-  certificate_arn   = "arn:aws:acm:ap-south-1:502390415551:certificate/912617f2-6890-4d84-a093-7e2e591b5e7b"
+  certificate_arn   = var.certificate_arn
 
   default_action {
     type             = "forward"
