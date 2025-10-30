@@ -38,19 +38,16 @@ variable "target_group_name" {
 variable "target_port" {
   type        = number
   description = "Port of targets"
-  default     = 80
 }
 
 variable "target_protocol" {
   type        = string
   description = "Protocol for target group"
-  default     = "HTTP"
 }
 
 variable "target_type" {
   type        = string
   description = "Target type (instance, ip, lambda)"
-  default     = "instance"
 }
 
 variable "target_instance_ids" {
@@ -107,7 +104,6 @@ variable "ssl_policy" {
 variable "certificate_arn" {
   type        = string
   description = "ARN of ACM certificate for HTTPS listener (required if HTTPS is used)"
-  default     = ""
 }
 
 variable "listener_rule_priority" {
