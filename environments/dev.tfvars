@@ -1,31 +1,34 @@
-aws_region                 = "ap-south-1"
-internal                   = false
-security_groups            = ["sg-0194a717e5865db00"]
-project_name               = "hfn-project"
-environment                = "dev"
-enable_deletion_protection = true
-app_name = "stagecare"
-port = [80, 443]
-load_balancer_name = "HFN-ALB"
+# Dev Environment Configuration
+# Sandbox Account: 502390415551
 
-# Target Group Settings
-target_group_protocol        = "HTTP"
-target_type                  = "instance"
-target_group_port            = 80
+# VPC Configuration - Default VPC for sandbox account
+vpc_id = "vpc-9bbf8bf3"
 
-# Health Checks
-health_check_path            = "/healthy.html"
-health_check_protocol        = "HTTP"
-health_check_interval        = 30
-health_check_timeout         = 5
-health_check_healthy_threshold   = 3
-health_check_unhealthy_threshold = 2
+# Public Subnets - Default subnets for multiple AZs (required for ALB)
+public_subnet_ids = [
+  "subnet-a4b9e4cc",  # ap-south-1a
+  "subnet-e5fe7ca9"   # ap-south-1b
+]
 
-# Listener settings
-listener_port                = 80
-listener_protocol            = "HTTP"
+# Target Port
+target_port = 80
 
+# ACM Certificate Domain (using a valid domain format for testing)
+acm_domain_name = "dev-platform.heartfulness.org"
 
+# Route53 Zone ID (new hosted zone in dev account)
+route53_zone_id = "Z08168851W5DQRMVANFP7"
 
+# Target Groups and Host Headers (configure as needed)
+target_group_arns = {}
+host_headers = {}
 
-
+# Tags
+tags = {
+  Environment = "dev"
+  Account     = "502390415551"
+  Purpose     = "Sandbox Testing"
+  ManagedBy   = "Terraform"
+  Project     = "Data Platform"
+  RunId       = "dev-2025-11-06"
+}
