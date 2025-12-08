@@ -1,40 +1,39 @@
-#Output
-output "alb_arn"          { 
-    value = aws_lb.lb.arn 
+output "alb_id" {
+  description = "The ID of the load balancer"
+  value       = aws_lb.this.id
 }
 
-output "alb_dns_name"     { 
-    value = aws_lb.lb.dns_name 
+output "alb_arn" {
+  description = "The ARN of the load balancer"
+  value       = aws_lb.this.arn
 }
 
-output "alb_zone_id"      { 
-    value = aws_lb.lb.zone_id
+output "alb_arn_suffix" {
+  description = "The ARN suffix for use with CloudWatch Metrics"
+  value       = aws_lb.this.arn_suffix
 }
 
-output "http_listener_arn"{
-     value = aws_lb_listener.http.arn 
+output "alb_dns_name" {
+  description = "The DNS name of the load balancer"
+  value       = aws_lb.this.dns_name
 }
 
-output "https_listener_arn" {
-  description = "HTTPS listener ARN for ALB"
-  value       = aws_lb_listener.https.arn
+output "alb_zone_id" {
+  description = "The canonical hosted zone ID of the load balancer (to be used in Route 53 alias records)"
+  value       = aws_lb.this.zone_id
 }
 
-output "alb_sg_id"        { 
-    value = aws_security_group.alb.id 
+output "security_group_id" {
+  description = "The ID of the ALB security group"
+  value       = aws_security_group.alb_sg.id
 }
 
-output "certificate_arn" {
-  value = aws_acm_certificate.cert.arn
+output "security_group_arn" {
+  description = "The ARN of the ALB security group"
+  value       = aws_security_group.alb_sg.arn
 }
 
-
-output "validation_records" {
-  value = [
-    for dvo in aws_acm_certificate.cert.domain_validation_options : {
-      name  = dvo.resource_record_name
-      type  = dvo.resource_record_type
-      value = dvo.resource_record_value
-    }
-  ]
+output "security_group_name" {
+  description = "The name of the ALB security group"
+  value       = aws_security_group.alb_sg.name
 }
