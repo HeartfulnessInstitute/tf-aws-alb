@@ -1,67 +1,67 @@
-variable "name_prefix"       { 
-    type = string
- }
-
-variable "vpc_id"            { 
-    type = string 
-}
-
-variable "public_subnet_ids" { 
-    type = list(string) 
-}
-
-variable "target_port"       {
-     type = number
-     default = 80 
-}
-
-variable "tags"              {
-    description = "tags"
-     type = map(string)
-     default = {}
-}
-
-variable "listener_rules" {
-  type = map(string)
-  default = {}
-}
-
-variable "target_groups" {
-  type = map(object({
-    port        = number
-    health_path = string
-  }))
-  default = {}
-}
-
-variable "target_group_arns" {
-  description = "Map of ECS service name to target group ARN"
-  type        = map(string)
-}
-
-variable "host_headers" {
-  description = "Map of ECS service name to host header"
-  type        = map(string)
-}
-
-variable "acm_domain_name" {
-  description = "Domain name for ACM certificate"
+variable "alb_name" {
+  description = "Name of the Application Load Balancer"
   type        = string
 }
 
-variable "route53_zone_id" {
-  description = "Hosted zone ID in Account B"
-  type        = string
-}
-
-variable "create_target_group" {
-  description = "Whether to create a Target Group inside the module"
-  type        = bool
-  default     = true
-}
-
-variable "create_listener_rules" {
+variable "internal" {
+  description = "Whether the load balancer is internal or internet-facing"
   type        = bool
   default     = false
-  description = "Whether to create HTTPS listener rules inside the module"
+}
+
+variable "ip_address_type" {
+  description = "The type of IP addresses used by the subnets (ipv4 or dualstack)"
+  type        = string
+  default     = "ipv4"
+}
+
+variable "subnet_ids" {
+  description = "List of subnet IDs to attach to the load balancer (minimum 2 in different AZs)"
+  type        = list(string)
+}
+
+variable "vpc_id" {
+  description = "VPC ID where the load balancer will be created"
+  type        = string
+}
+
+variable "enable_deletion_protection" {
+  description = "Enable deletion protection on the load balancer"
+  type        = bool
+  default     = false
+}
+
+variable "ingress_rules" {
+  description = "List of ingress rules for the ALB security group"
+  type = list(object({
+    description      = string
+    from_port        = number
+    to_port          = number
+    protocol         = string
+    cidr_blocks      = optional(list(string))
+    ipv6_cidr_blocks = optional(list(string))
+    security_groups  = optional(list(string))
+  }))
+  default = [
+    {
+      description = "Allow HTTP"
+      from_port   = 80
+      to_port     = 80
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    },
+    {
+      description = "Allow HTTPS"
+      from_port   = 443
+      to_port     = 443
+      protocol    = "tcp"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  ]
+}
+
+variable "tags" {
+  description = "A map of tags to add to all resources"
+  type        = map(string)
+  default     = {}
 }
