@@ -26,6 +26,18 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # SeaTunnel REST API port (internal VPC access only)
+  dynamic "ingress" {
+    for_each = var.enable_seatunnel_listener ? [1] : []
+    content {
+      from_port   = 8080
+      to_port     = 8080
+      protocol    = "tcp"
+      cidr_blocks = ["10.0.0.0/8"]  # Internal VPC traffic only
+      description = "SeaTunnel REST API - internal only"
+    }
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -127,6 +139,20 @@ resource "aws_lb_listener_rule" "https_rule" {
 }
 
 
+# HTTP:8080 Listener for SeaTunnel REST API
+resource "aws_lb_listener" "seatunnel" {
+  count = var.enable_seatunnel_listener && var.seatunnel_target_group_arn != "" ? 1 : 0
+
+  load_balancer_arn = aws_lb.lb.arn
+  port              = 8080
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = var.seatunnel_target_group_arn
+  }
+}
+
 resource "aws_acm_certificate" "cert" {
   provider          = aws.main
   domain_name       = var.acm_domain_name
@@ -157,5 +183,3 @@ resource "aws_acm_certificate_validation" "cert_validation" {
   certificate_arn         = aws_acm_certificate.cert.arn
   validation_record_fqdns = [for r in aws_route53_record.cert_validation : r.fqdn]
 }
-
-

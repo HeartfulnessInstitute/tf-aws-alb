@@ -38,3 +38,8 @@ output "validation_records" {
     }
   ]
 }
+
+output "seatunnel_listener_arn" {
+  description = "SeaTunnel HTTP:8080 listener ARN"
+  value       = length(aws_lb_listener.seatunnel) > 0 ? aws_lb_listener.seatunnel[0].arn : ""
+}
