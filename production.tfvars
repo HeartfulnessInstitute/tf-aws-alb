@@ -8,8 +8,8 @@ internal = false
 enable_deletion_protection = true
 
 subnet_ids = [
-  "subnet-0786ba8d1ee637880",
-  "subnet-0cdac3caa99d7bfab"
+  "subnet-0a12345abcd",
+  "subnet-0e4f5g6h"
 ]
 
 vpc_id = "vpc-00e54a101ae3e3e9d"
