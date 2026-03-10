@@ -12,7 +12,7 @@ subnet_ids = [
   "subnet-0cdac3caa99d7bfab"
 ]
 
-vpc_id = "vpc-098fdd20f636a1321"
+vpc_id = "vpc-00e54a101ae3e3e9d"
 
 tags = {
   Environment = "production"
