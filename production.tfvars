@@ -13,9 +13,3 @@ subnet_ids = [
 ]
 
 vpc_id = "vpc-00e54a101ae3e3e9d"
-
-tags = {
-  Environment = "production"
-  Project     = "donation-strapi"
-  Owner       = "heartfulness"
-}
