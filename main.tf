@@ -26,6 +26,18 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # SeaTunnel REST API port (internal VPC access only)
+  dynamic "ingress" {
+    for_each = var.enable_seatunnel_listener ? [1] : []
+    content {
+      from_port   = 8080
+      to_port     = 8080
+      protocol    = "tcp"
+      cidr_blocks = ["10.0.0.0/8"]  # Internal VPC traffic only
+      description = "SeaTunnel REST API - internal only"
+    }
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -41,6 +53,7 @@ resource "aws_lb" "lb" {
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
   subnets            = var.public_subnet_ids
+  idle_timeout       = var.idle_timeout
   tags               = merge(var.tags, { Name = "${var.name_prefix}-alb" })
 }
 
@@ -127,9 +140,26 @@ resource "aws_lb_listener_rule" "https_rule" {
 }
 
 
+# HTTP:8080 Listener for SeaTunnel REST API
+resource "aws_lb_listener" "seatunnel" {
+  count = var.enable_seatunnel_listener && var.seatunnel_target_group_arn != "" ? 1 : 0
+
+  load_balancer_arn = aws_lb.lb.arn
+  port              = 8080
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = var.seatunnel_target_group_arn
+  }
+}
+
 resource "aws_acm_certificate" "cert" {
   provider          = aws.main
   domain_name       = var.acm_domain_name
+  subject_alternative_names = var.acm_domain_name != null && length(regexall("^\\*\\.", var.acm_domain_name)) > 0 ? [
+    replace(var.acm_domain_name, "/^\\*\\./", "")  # Add root domain (e.g., reports.heartfulness.org)
+  ] : []
   validation_method = "DNS"
 
   tags = var.tags
@@ -142,14 +172,19 @@ resource "aws_acm_certificate" "cert" {
 resource "aws_route53_record" "cert_validation" {
   provider = aws.main  
   for_each = {
-    for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => dvo
+    for dvo in aws_acm_certificate.cert.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
   }
 
-  zone_id = var.route53_zone_id
-  name    = each.value.resource_record_name
-  type    = each.value.resource_record_type
-  records = [each.value.resource_record_value]
-  ttl     = 300
+  allow_overwrite = true
+  zone_id         = var.route53_zone_id
+  name            = each.value.name
+  type            = each.value.type
+  records         = [each.value.record]
+  ttl             = 300
 }
 
 resource "aws_acm_certificate_validation" "cert_validation" {
@@ -157,5 +192,3 @@ resource "aws_acm_certificate_validation" "cert_validation" {
   certificate_arn         = aws_acm_certificate.cert.arn
   validation_record_fqdns = [for r in aws_route53_record.cert_validation : r.fqdn]
 }
-
-

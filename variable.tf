@@ -65,3 +65,21 @@ variable "create_listener_rules" {
   default     = false
   description = "Whether to create HTTPS listener rules inside the module"
 }
+
+variable "seatunnel_target_group_arn" {
+  description = "Target group ARN for SeaTunnel service (HTTP:8080 listener)"
+  type        = string
+  default     = ""
+}
+
+variable "enable_seatunnel_listener" {
+  description = "Whether to create HTTP:8080 listener for SeaTunnel"
+  type        = bool
+  default     = false
+}
+
+variable "idle_timeout" {
+  description = "The time in seconds that the connection is allowed to be idle. For long-running queries (Trino), set to 300-600 seconds."
+  type        = number
+  default     = 300
+}
