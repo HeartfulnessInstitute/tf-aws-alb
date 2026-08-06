@@ -77,3 +77,9 @@ variable "enable_seatunnel_listener" {
   type        = bool
   default     = false
 }
+
+variable "idle_timeout" {
+  description = "The time in seconds that the connection is allowed to be idle. For long-running queries (Trino), set to 300-600 seconds."
+  type        = number
+  default     = 300
+}
